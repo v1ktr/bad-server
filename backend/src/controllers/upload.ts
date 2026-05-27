@@ -11,7 +11,6 @@ export const uploadFile = async (
         return next(new BadRequestError('Файл не загружен'))
     }
     try {
-        // const { size } = 
         if (req.file.size < 2 * 1024) {
             return next(
                 new BadRequestError('Файл слишком маленький')

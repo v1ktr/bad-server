@@ -14,7 +14,6 @@ import rateLimit from 'express-rate-limit'
 import mongoSanitize from 'express-mongo-sanitize'
 import helmet from 'helmet'
 import hpp from 'hpp'
-//import csrf from 'csurf'
 import csrfRouter from './routes/csrf'
 
 const { PORT = 3000 } = process.env
@@ -24,16 +23,8 @@ mongoose.set('sanitizeFilter', true)
 
 app.use(helmet())
 
-// app.use(
-//     cors({
-//         origin: 'http://localhost:5173',
-//         credentials: true,
-//     })
-// )
-
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    //max: 10,
     limit: 50,
     standardHeaders: true,
     legacyHeaders: false,
@@ -73,7 +64,6 @@ app.use(hpp())
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-//app.options('*', cors())
 app.use(routes)
 app.use(errors())
 app.use(errorHandler)

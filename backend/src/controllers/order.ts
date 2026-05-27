@@ -35,14 +35,6 @@ export const getOrders = async (
 
         const filters: FilterQuery<Partial<IOrder>> = {}
 
-        // if (status) {
-        //     // if (typeof status === 'object') {
-        //     //     Object.assign(filters, status)
-        //     // }
-        //     if (typeof status === 'string') {
-        //         filters.status = status
-        //     }
-        // }
         if (status) {
             if (typeof status !== 'string') {
                 return next(new BadRequestError('Некорректный status'))
@@ -120,11 +112,6 @@ export const getOrders = async (
             filters.$or = searchConditions
         }
 
-        // const sort: { [key: string]: any } = {}
-
-        // if (sortField && sortOrder) {
-        //     sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
-        // }
         const allowedSortFields = [
             'createdAt',
             'totalAmount',
@@ -216,7 +203,6 @@ export const getOrdersCurrentUser = async (
             const safeSearch = escapeRegex(search as string)
             const searchRegex = new RegExp(safeSearch, 'i')
             // если не экранировать то получаем Invalid regular expression: /+1/i: Nothing to repeat
-            // const searchRegex = new RegExp(search as string, 'i')
             const searchNumber = Number(search)
             const products = await Product.find({ title: searchRegex })
             const productIds = products.map((product) => product._id)
