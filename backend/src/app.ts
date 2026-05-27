@@ -14,7 +14,7 @@ import rateLimit from 'express-rate-limit'
 import mongoSanitize from 'express-mongo-sanitize'
 import helmet from 'helmet'
 import hpp from 'hpp'
-import csrf from 'csurf'
+//import csrf from 'csurf'
 import csrfRouter from './routes/csrf'
 
 const { PORT = 3000 } = process.env
@@ -33,8 +33,8 @@ app.use(
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    //max: 100,
-    limit: 100,
+    //max: 10,
+    limit: 5,
     standardHeaders: true,
     legacyHeaders: false,
     message: {

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { FilterQuery } from 'mongoose'
 import NotFoundError from '../errors/not-found-error'
+import BadRequestError from '../errors/bad-request-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 
@@ -94,11 +95,36 @@ export const getCustomers = async (
             }
         }
 
+        // if (search) {
+        //     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        //     const safeSearch = escapeRegex(search as string)
+        //     const searchRegex = new RegExp(safeSearch, 'i')
+        //     //const searchRegex = new RegExp(search as string, 'i')
+        //     const orders = await Order.find(
+        //         {
+        //             $or: [{ deliveryAddress: searchRegex }],
+        //         },
+        //         '_id'
+        //     )
+
+        //     const orderIds = orders.map((order) => order._id)
+
+        //     filters.$or = [
+        //         { name: searchRegex },
+        //         { lastOrder: { $in: orderIds } },
+        //     ]
+        // }
         if (search) {
-            const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            const safeSearch = escapeRegex(search as string)
+            if (typeof search !== 'string') {
+                return next(new BadRequestError('Некорректный search'))
+            }
+
+            const escapeRegex = (value: string) =>
+                value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+            const safeSearch = escapeRegex(search)
             const searchRegex = new RegExp(safeSearch, 'i')
-            //const searchRegex = new RegExp(search as string, 'i')
+
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
