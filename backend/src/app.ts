@@ -34,7 +34,7 @@ app.use(
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     //max: 10,
-    limit: 5,
+    limit: 50,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
