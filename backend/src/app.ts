@@ -26,14 +26,15 @@ app.use(helmet())
 
 app.use(
     cors({
-        origin: ['http://localhost'],
+        origin: ['http://localhost:5173'],
         credentials: true,
     })
 )
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    //max: 100,
+    limit: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
