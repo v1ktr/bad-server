@@ -4,21 +4,34 @@ import path from 'path'
 
 export default function serveStatic(baseDir: string) {
     return (req: Request, res: Response, next: NextFunction) => {
-        // Определяем полный путь к запрашиваемому файлу
-        const filePath = path.join(baseDir, req.path)
+        try {
+            // Определяем полный путь к запрашиваемому файлу
+            const normalizedPath = path.normalize(req.path)
+            const filePath = path.join(baseDir, normalizedPath)
 
-        // Проверяем, существует ли файл
-        fs.access(filePath, fs.constants.F_OK, (err) => {
-            if (err) {
-                // Файл не существует отдаем дальше мидлварам
-                return next()
+            const resolvedPath = path.resolve(filePath)
+            const resolvedBase = path.resolve(baseDir)
+
+            if (!resolvedPath.startsWith(resolvedBase)) {
+                return res.status(403).json({
+                    message: 'Доступ запрещен',
+                })
             }
-            // Файл существует, отправляем его клиенту
-            return res.sendFile(filePath, (err) => {
-                if (err) {
-                    next(err)
+
+            // Проверяем, существует ли файл
+            fs.access(resolvedPath, fs.constants.F_OK, (accessError) => {
+                if (accessError) {
+                    return next()
                 }
+
+                return res.sendFile(resolvedPath, (sendError) => {
+                    if (sendError) {
+                        next(sendError)
+                    }
+                })
             })
-        })
+        } catch (error) {
+            return next(error)
+        }
     }
 }
