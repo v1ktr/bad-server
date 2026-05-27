@@ -14,6 +14,8 @@ import rateLimit from 'express-rate-limit'
 import mongoSanitize from 'express-mongo-sanitize'
 import helmet from 'helmet'
 import hpp from 'hpp'
+import csrf from 'csurf'
+import csrfRouter from './routes/csrf'
 
 const { PORT = 3000 } = process.env
 const app = express()
@@ -42,6 +44,8 @@ const limiter = rateLimit({
 app.use(limiter)
 
 app.use(cookieParser())
+
+app.use('/auth', csrfRouter)
 
 app.use(
     json({
