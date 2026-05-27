@@ -112,10 +112,24 @@ export const getOrders = async (
             filters.$or = searchConditions
         }
 
-        const sort: { [key: string]: any } = {}
+        // const sort: { [key: string]: any } = {}
 
-        if (sortField && sortOrder) {
-            sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
+        // if (sortField && sortOrder) {
+        //     sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
+        // }
+        const allowedSortFields = [
+            'createdAt',
+            'totalAmount',
+            'orderNumber',
+            'status',
+        ]
+
+        const safeSortField = allowedSortFields.includes(sortField as string)
+            ? sortField
+            : 'createdAt'
+
+        const sort = {
+            [safeSortField as string]: sortOrder === 'desc' ? -1 : 1,
         }
 
         aggregatePipeline.push(
@@ -190,8 +204,11 @@ export const getOrdersCurrentUser = async (
         let orders = user.orders as unknown as IOrder[]
 
         if (search) {
+            const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const safeSearch = escapeRegex(search as string)
+            const searchRegex = new RegExp(safeSearch, 'i')
             // если не экранировать то получаем Invalid regular expression: /+1/i: Nothing to repeat
-            const searchRegex = new RegExp(search as string, 'i')
+            //const searchRegex = new RegExp(search as string, 'i')
             const searchNumber = Number(search)
             const products = await Product.find({ title: searchRegex })
             const productIds = products.map((product) => product._id)
