@@ -92,20 +92,25 @@ export const getCustomers = async (
         }
 
         if (search) {
-            const searchRegex = new RegExp(search as string, 'i')
+            
+            const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const safeSearch = escapeRegex(search as string)
+            const searchRegex = new RegExp(safeSearch, 'i')
+
             const orders = await Order.find(
-                {
-                    $or: [{ deliveryAddress: searchRegex }],
-                },
+                { deliveryAddress: searchRegex },
                 '_id'
             )
 
             const orderIds = orders.map((order) => order._id)
 
-            filters.$or = [
-                { name: searchRegex },
-                { lastOrder: { $in: orderIds } },
-            ]
+            filters.$or = [{ name: searchRegex }]
+
+            if (orderIds.length > 0) {
+                filters.$or.push({
+                    lastOrder: { $in: orderIds },
+                })
+            }
         }
 
         const sort: { [key: string]: any } = {}
@@ -114,10 +119,12 @@ export const getCustomers = async (
             sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
         }
 
+        const normalLimit = Math.min(Number(limit) || 10, 10)
+
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (Number(page) - 1) * Number(normalLimit),
+            limit: Number(normalLimit),
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -137,7 +144,7 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / Number(normalLimit))
 
         res.status(200).json({
             customers: users,
@@ -145,7 +152,7 @@ export const getCustomers = async (
                 totalUsers,
                 totalPages,
                 currentPage: Number(page),
-                pageSize: Number(limit),
+                pageSize: Number(normalLimit),
             },
         })
     } catch (error) {

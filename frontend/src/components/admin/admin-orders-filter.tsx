@@ -15,8 +15,20 @@ export default function AdminFilterOrders() {
     const { updateFilter, clearFilters } = useActionCreators(ordersActions)
     const filterOrderOption = useSelector(ordersSelector.selectFilterOption)
 
-    const handleFilter = (filters: Record<string, any>) => {
-        dispatch(updateFilter({ ...filters, status: filters.status.value }))
+    type FilterValue =
+    | string
+    | number
+    | null
+    | { value: string }
+
+    const handleFilter = (filters: Record<string, FilterValue>) => {
+        const statusValue =
+            filters.status && typeof filters.status === 'object'
+                ? filters.status.value
+                : (filters.status as string | null)
+        // преобразовываем значение null в undefined и обеспечиваем корректный тип статуса для updateFilter.
+        const statusForUpdate = statusValue === null ? undefined : (statusValue as "")
+        dispatch(updateFilter({ ...filters, status: statusForUpdate }))
         const queryParams: { [key: string]: string } = {}
         Object.entries(filters).forEach(([key, value]) => {
             if (value) {

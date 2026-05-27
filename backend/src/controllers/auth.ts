@@ -99,7 +99,8 @@ const deleteRefreshTokenInUser = async (
 
     const decodedRefreshTkn = jwt.verify(
         rfTkn,
-        REFRESH_TOKEN.secret
+        REFRESH_TOKEN.secret, 
+        { algorithms: ['HS256']},
     ) as JwtPayload
     const user = await User.findOne({
         _id: decodedRefreshTkn._id,
@@ -192,9 +193,18 @@ const updateCurrentUser = async (
 ) => {
     const userId = res.locals.user._id
     try {
-        const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
-            new: true,
-        }).orFail(
+        const { name, email } = req.body
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                name,
+                email,
+            },
+            {
+                new: true,
+                runValidators: true,
+            }
+        ).orFail(
             () =>
                 new NotFoundError(
                     'Пользователь по заданному id отсутствует в базе'

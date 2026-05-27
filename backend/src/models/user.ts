@@ -3,7 +3,7 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import mongoose, { Document, HydratedDocument, Model, Types } from 'mongoose'
 import validator from 'validator'
-import md5 from 'md5'
+import bcrypt from 'bcryptjs'
 
 import { ACCESS_TOKEN, REFRESH_TOKEN } from '../config'
 import UnauthorizedError from '../errors/unauthorized-error'
@@ -117,8 +117,9 @@ const userSchema = new mongoose.Schema<IUser, IUserModel, IUserMethods>(
 userSchema.pre('save', async function hashingPassword(next) {
     try {
         if (this.isModified('password')) {
-            this.password = md5(this.password)
+            this.password = await bcrypt.hash(this.password, 10)
         }
+
         next()
     } catch (error) {
         next(error as Error)
@@ -139,6 +140,7 @@ userSchema.methods.generateAccessToken = function generateAccessToken() {
         {
             expiresIn: ACCESS_TOKEN.expiry,
             subject: user.id.toString(),
+            algorithm: 'HS256',
         }
     )
 }
@@ -155,6 +157,7 @@ userSchema.methods.generateRefreshToken =
             {
                 expiresIn: REFRESH_TOKEN.expiry,
                 subject: user.id.toString(),
+                algorithm: 'HS256',
             }
         )
 
@@ -171,21 +174,32 @@ userSchema.methods.generateRefreshToken =
         return refreshToken
     }
 
-userSchema.statics.findUserByCredentials = async function findByCredentials(
-    email: string,
-    password: string
-) {
-    const user = await this.findOne({ email })
-        .select('+password')
-        .orFail(() => new UnauthorizedError('Неправильные почта или пароль'))
-    const passwdMatch = md5(password) === user.password
-    if (!passwdMatch) {
-        return Promise.reject(
-            new UnauthorizedError('Неправильные почта или пароль')
+userSchema.statics.findUserByCredentials =
+    async function findByCredentials(email: string, password: string) {
+        const user = await this.findOne({ email })
+            .select('+password')
+            .orFail(
+                () =>
+                    new UnauthorizedError(
+                        'Неправильные почта или пароль'
+                    )
+            )
+
+        const passwdMatch = await bcrypt.compare(
+            password,
+            user.password
         )
+
+        if (!passwdMatch) {
+            return Promise.reject(
+                new UnauthorizedError(
+                    'Неправильные почта или пароль'
+                )
+            )
+        }
+
+        return user
     }
-    return user
-}
 
 userSchema.methods.calculateOrderStats = async function calculateOrderStats() {
     const user = this
