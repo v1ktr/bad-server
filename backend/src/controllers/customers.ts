@@ -95,6 +95,7 @@ export const getCustomers = async (
             }
         }
 
+        // v1
         // if (search) {
         //     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         //     const safeSearch = escapeRegex(search as string)
@@ -114,15 +115,44 @@ export const getCustomers = async (
         //         { lastOrder: { $in: orderIds } },
         //     ]
         // }
+        // v2
+        // if (search) {
+        //     if (typeof search !== 'string') {
+        //         return next(new BadRequestError('Некорректный search'))
+        //     }
+
+        //     const escapeRegex = (value: string) =>
+        //         value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+        //     const safeSearch = escapeRegex(search)
+        //     const searchRegex = new RegExp(safeSearch, 'i')
+
+        //     const orders = await Order.find(
+        //         {
+        //             $or: [{ deliveryAddress: searchRegex }],
+        //         },
+        //         '_id'
+        //     )
+
+        //     const orderIds = orders.map((order) => order._id)
+
+        //     filters.$or = [
+        //         { name: searchRegex },
+        //         { lastOrder: { $in: orderIds } },
+        //     ]
+        // }
+        // v3
         if (search) {
-            if (typeof search !== 'string') {
-                return next(new BadRequestError('Некорректный search'))
-            }
+            const searchValue =
+                typeof search === 'string'
+                    ? search
+                    : JSON.stringify(search)
 
             const escapeRegex = (value: string) =>
                 value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-            const safeSearch = escapeRegex(search)
+            const safeSearch = escapeRegex(searchValue)
+
             const searchRegex = new RegExp(safeSearch, 'i')
 
             const orders = await Order.find(

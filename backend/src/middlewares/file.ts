@@ -54,7 +54,8 @@ const fileFilter = (
         return cb(new Error('Недопустимый тип файла'))
     }
 
-    if (file.size && file.size < 2 * 1024) {
+    // file.size && 
+    if (file.size < 2 * 1024) {
         return cb(new Error('Файл слишком маленький'))
     }
 

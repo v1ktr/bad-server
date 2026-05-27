@@ -71,7 +71,7 @@ app.use(hpp())
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-app.options('*', cors())
+//app.options('*', cors())
 app.use(routes)
 app.use(errors())
 app.use(errorHandler)
