@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import { FilterQuery } from 'mongoose'
 import NotFoundError from '../errors/not-found-error'
-import BadRequestError from '../errors/bad-request-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 
@@ -29,9 +28,6 @@ export const getCustomers = async (
             orderCountTo,
             search,
         } = req.query
-
-        const normalizedLimit = Math.min(Number(limit), 10)
-        const normalizedPage = Math.max(Number(page), 1)
 
         const filters: FilterQuery<Partial<IUser>> = {}
 
@@ -95,66 +91,10 @@ export const getCustomers = async (
             }
         }
 
-        // v1
-        // if (search) {
-        //     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        //     const safeSearch = escapeRegex(search as string)
-        //     const searchRegex = new RegExp(safeSearch, 'i')
-        //     //const searchRegex = new RegExp(search as string, 'i')
-        //     const orders = await Order.find(
-        //         {
-        //             $or: [{ deliveryAddress: searchRegex }],
-        //         },
-        //         '_id'
-        //     )
-
-        //     const orderIds = orders.map((order) => order._id)
-
-        //     filters.$or = [
-        //         { name: searchRegex },
-        //         { lastOrder: { $in: orderIds } },
-        //     ]
-        // }
-        // v2
-        // if (search) {
-        //     if (typeof search !== 'string') {
-        //         return next(new BadRequestError('Некорректный search'))
-        //     }
-
-        //     const escapeRegex = (value: string) =>
-        //         value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-        //     const safeSearch = escapeRegex(search)
-        //     const searchRegex = new RegExp(safeSearch, 'i')
-
-        //     const orders = await Order.find(
-        //         {
-        //             $or: [{ deliveryAddress: searchRegex }],
-        //         },
-        //         '_id'
-        //     )
-
-        //     const orderIds = orders.map((order) => order._id)
-
-        //     filters.$or = [
-        //         { name: searchRegex },
-        //         { lastOrder: { $in: orderIds } },
-        //     ]
-        // }
-        // v3
         if (search) {
-            const searchValue =
-                typeof search === 'string'
-                    ? search
-                    : JSON.stringify(search)
-
-            const escapeRegex = (value: string) =>
-                value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-            const safeSearch = escapeRegex(searchValue)
-
+            const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const safeSearch = escapeRegex(search as string)
             const searchRegex = new RegExp(safeSearch, 'i')
-
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
@@ -176,10 +116,12 @@ export const getCustomers = async (
             sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
         }
 
+        const normalLimit = Math.min(Number(limit) || 10, 10)
+
         const options = {
             sort,
-            skip: (Number(page) - 1) * normalizedLimit,
-            limit: normalizedLimit
+            skip: (Number(page) - 1) * Number(normalLimit),
+            limit: Number(normalLimit),
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -199,15 +141,15 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / normalizedLimit)
+        const totalPages = Math.ceil(totalUsers / Number(normalLimit))
 
         res.status(200).json({
             customers: users,
             pagination: {
                 totalUsers,
                 totalPages,
-                currentPage: normalizedPage,
-                pageSize: normalizedLimit,
+                currentPage: Number(page),
+                pageSize: Number(normalLimit),
             },
         })
     } catch (error) {

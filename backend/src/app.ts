@@ -24,12 +24,12 @@ mongoose.set('sanitizeFilter', true)
 
 app.use(helmet())
 
-app.use(
-    cors({
-        origin: ['http://localhost:5173'],
-        credentials: true,
-    })
-)
+// app.use(
+//     cors({
+//         origin: 'http://localhost:5173',
+//         credentials: true,
+//     })
+// )
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -45,6 +45,8 @@ const limiter = rateLimit({
 app.use(limiter)
 
 app.use(cookieParser())
+
+app.use(cors({ origin: process.env.ORIGIN_ALLOW, credentials: true }))
 
 app.use('/auth', csrfRouter)
 
